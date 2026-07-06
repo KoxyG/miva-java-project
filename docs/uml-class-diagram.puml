@@ -1,0 +1,279 @@
+@startuml SLCAS_Class_Diagram
+title Smart Library Circulation & Automation System (SLCAS)\nUML Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+  BackgroundColor #FEFEFE
+  BorderColor #333333
+  ArrowColor #333333
+}
+
+' ─────────────────────────────────────────────
+' MODEL LAYER — class hierarchy & encapsulation
+' ─────────────────────────────────────────────
+package "model" <<Rectangle>> {
+
+  interface Borrowable {
+    +borrow(userId: String, dueDate: LocalDate): boolean
+    +returnItem(): boolean
+    +isAvailable(): boolean
+    +getCurrentBorrowerId(): String
+    +getDueDate(): LocalDate
+  }
+
+  abstract class LibraryItem {
+    #id: String
+    #title: String
+    #author: String
+    #year: int
+    #available: boolean
+    #currentBorrowerId: String
+    #dueDate: LocalDate
+    #borrowCount: int
+    +{abstract} getItemType(): String
+    +{abstract} getCategory(): String
+    +borrow(userId, dueDate): boolean
+    +returnItem(): boolean
+    +isOverdue(): boolean
+  }
+
+  class Book {
+    -isbn: String
+    -pages: int
+    +getItemType(): String
+    +getCategory(): String
+  }
+
+  class Magazine {
+    -issueNumber: int
+    -publisher: String
+    +getItemType(): String
+    +getCategory(): String
+  }
+
+  class Journal {
+    -volume: String
+    -field: String
+    +getItemType(): String
+    +getCategory(): String
+  }
+
+  class UserAccount {
+    -userId: String
+    -name: String
+    -email: String
+    -borrowingHistory: List<BorrowRecord>
+    +addBorrowRecord(...)
+    +completeBorrowRecord(...)
+    +hasOverdueItems(items): boolean
+  }
+
+  class "UserAccount.BorrowRecord" as BorrowRecord {
+    -itemId: String
+    -borrowDate: LocalDate
+    -dueDate: LocalDate
+    -returnDate: LocalDate
+    +isOverdue(): boolean
+  }
+
+  class LibraryDatabase {
+    -items: ArrayList<LibraryItem>
+    -users: ArrayList<UserAccount>
+    -reservationQueue: Queue<String>
+    -undoStack: Stack<AdminAction>
+    -itemWaitlists: Map<String, Queue<String>>
+    +addItem(item): void
+    +removeItem(item): void
+    +findItemById(id): LibraryItem
+    +pushUndoAction(action): void
+    +popUndoAction(): AdminAction
+  }
+
+  class "LibraryDatabase.AdminAction" as AdminAction {
+    -type: ActionType
+    -item: LibraryItem
+    -user: UserAccount
+  }
+
+  enum ActionType {
+    ADD_ITEM
+    DELETE_ITEM
+    ADD_USER
+    DELETE_USER
+  }
+}
+
+' Inheritance & interface implementation
+Borrowable <|.. LibraryItem : implements
+LibraryItem <|-- Book
+LibraryItem <|-- Magazine
+LibraryItem <|-- Journal
+
+' Composition
+UserAccount *-- BorrowRecord : contains
+LibraryDatabase *-- "0..*" LibraryItem : items\n(ArrayList)
+LibraryDatabase *-- "0..*" UserAccount : users\n(ArrayList)
+LibraryDatabase *-- AdminAction : undoStack\n(Stack)
+AdminAction --> ActionType
+AdminAction o-- LibraryItem
+AdminAction o-- UserAccount
+
+' ─────────────────────────────────────────────
+' CONTROLLER LAYER
+' ─────────────────────────────────────────────
+package "controller" <<Rectangle>> {
+
+  class LibraryManager {
+    -database: LibraryDatabase
+    -searchEngine: SearchEngine
+    -borrowController: BorrowController
+    -itemCache: ItemCache
+    -sortedByTitle: boolean
+    +processItem(item): String
+    +computeOverdueCharge(...): double
+    +countByCategory(...): int
+    +search(query, type): List<LibraryItem>
+    +sortItems(field, algorithm): void
+    +undoLastAction(): boolean
+    +saveData(...): void
+    +loadData(...): void
+  }
+
+  class SearchEngine {
+    +linearSearchByTitle(...): List<LibraryItem>
+    +linearSearchByAuthor(...): List<LibraryItem>
+    +binarySearchByTitle(...): List<LibraryItem>
+    +recursiveSearchByTitle(...): List<LibraryItem>
+    +searchByType(...): List<LibraryItem>
+  }
+
+  class BorrowController {
+    -database: LibraryDatabase
+    +borrowItem(itemId, userId): boolean
+    +returnItem(itemId): boolean
+    +reserveItem(itemId, userId): boolean
+    -processWaitlist(itemId): void
+  }
+}
+
+LibraryManager *-- LibraryDatabase
+LibraryManager --> SearchEngine
+LibraryManager --> BorrowController
+LibraryManager --> ItemCache
+BorrowController --> LibraryDatabase
+SearchEngine ..> LibraryItem : searches
+
+' ─────────────────────────────────────────────
+' UTILS LAYER
+' ─────────────────────────────────────────────
+package "utils" <<Rectangle>> {
+
+  class SortAlgorithms {
+    +{static} selectionSort(...)
+    +{static} insertionSort(...)
+    +{static} mergeSort(...)
+    +{static} quickSort(...)
+    +{static} sort(field, algorithm): void
+  }
+
+  class ItemCache {
+    -cache: LibraryItem[10]
+    -accessCounts: int[10]
+    +recordAccess(item): void
+    +getMostFrequentItems(): LibraryItem[]
+  }
+
+  class FileHandler {
+    +{static} saveItems(...): void
+    +{static} loadItems(...): List<LibraryItem>
+    +{static} saveUsers(...): void
+    +{static} loadUsers(...): List<UserAccount>
+  }
+
+  class IDGenerator {
+    +{static} generateItemId(prefix): String
+    +{static} generateUserId(): String
+  }
+
+  enum "SortAlgorithms.SortField" as SortField {
+    TITLE
+    AUTHOR
+    YEAR
+  }
+
+  enum "SortAlgorithms.Algorithm" as Algorithm {
+    SELECTION_SORT
+    INSERTION_SORT
+    MERGE_SORT
+    QUICK_SORT
+  }
+}
+
+LibraryManager ..> SortAlgorithms : uses
+LibraryManager ..> FileHandler : uses
+LibraryManager ..> IDGenerator : uses
+SortAlgorithms ..> LibraryItem : sorts
+ItemCache o-- LibraryItem : array cache
+
+' ─────────────────────────────────────────────
+' GUI LAYER
+' ─────────────────────────────────────────────
+package "gui" <<Rectangle>> {
+
+  class MainWindow {
+    -manager: LibraryManager
+    -viewItemsPanel: ViewItemsPanel
+    -borrowPanel: BorrowPanel
+    -adminPanel: AdminPanel
+    -searchSortPanel: SearchSortPanel
+    -reportsPanel: ReportsPanel
+    -overdueTimer: Timer
+    +main(args): void
+  }
+
+  class ViewItemsPanel
+  class BorrowPanel
+  class AdminPanel
+  class SearchSortPanel
+  class ReportsPanel
+  class LibraryTableRenderer
+}
+
+MainWindow --> LibraryManager
+MainWindow *-- ViewItemsPanel
+MainWindow *-- BorrowPanel
+MainWindow *-- AdminPanel
+MainWindow *-- SearchSortPanel
+MainWindow *-- ReportsPanel
+ViewItemsPanel --> LibraryManager
+BorrowPanel --> LibraryManager
+AdminPanel --> LibraryManager
+SearchSortPanel --> LibraryManager
+ReportsPanel --> LibraryManager
+ViewItemsPanel ..> LibraryTableRenderer : uses
+
+note right of LibraryItem
+  **Polymorphism**
+  processItem() accepts any
+  LibraryItem subtype and uses
+  instanceof to display type-specific
+  fields (ISBN, issue, volume).
+end note
+
+note bottom of LibraryDatabase
+  **Data Structures**
+  • ArrayList — items & users
+  • Queue — reservation waitlist (FIFO)
+  • Stack — admin undo (LIFO)
+  • Map — per-item waitlists
+end note
+
+note bottom of ItemCache
+  **Array**
+  Fixed-size array[10] tracks
+  most frequently accessed items.
+end note
+
+@enduml

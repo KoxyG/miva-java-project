@@ -1,0 +1,43 @@
+package model;
+
+public class Book extends LibraryItem {
+    private String isbn;
+    private int pages;
+
+    public Book(String id, String title, String author, int year, String isbn, int pages) {
+        super(id, title, author, year);
+        this.isbn = isbn;
+        this.pages = pages;
+    }
+
+    @Override
+    public String getItemType() {
+        return "Book";
+    }
+
+    @Override
+    public String getCategory() {
+        return "Books";
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public int getPages() {
+        return pages;
+    }
+
+    public void setPages(int pages) {
+        this.pages = pages;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + String.format(" | ISBN: %s, Pages: %d", isbn, pages);
+    }
+}

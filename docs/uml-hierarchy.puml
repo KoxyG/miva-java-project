@@ -1,0 +1,76 @@
+@startuml SLCAS_Class_Hierarchy
+title SLCAS — Class Hierarchy (OOP Focus)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+
+interface Borrowable {
+  +borrow(userId, dueDate): boolean
+  +returnItem(): boolean
+  +isAvailable(): boolean
+}
+
+abstract class LibraryItem {
+  #id: String
+  #title: String
+  #author: String
+  #year: int
+  #available: boolean
+  +{abstract} getItemType(): String
+  +{abstract} getCategory(): String
+}
+
+class Book {
+  -isbn: String
+  -pages: int
+}
+
+class Magazine {
+  -issueNumber: int
+  -publisher: String
+}
+
+class Journal {
+  -volume: String
+  -field: String
+}
+
+class UserAccount {
+  -userId: String
+  -name: String
+  -email: String
+  -borrowingHistory: List<BorrowRecord>
+}
+
+class BorrowRecord <<inner>> {
+  -itemId: String
+  -borrowDate: LocalDate
+  -dueDate: LocalDate
+}
+
+class LibraryDatabase {
+  -items: ArrayList<LibraryItem>
+  -users: ArrayList<UserAccount>
+  -reservationQueue: Queue<String>
+  -undoStack: Stack<AdminAction>
+}
+
+Borrowable <|.. LibraryItem : <<implements>>
+LibraryItem <|-- Book : <<extends>>
+LibraryItem <|-- Magazine : <<extends>>
+LibraryItem <|-- Journal : <<extends>>
+
+UserAccount *-- BorrowRecord : composition
+LibraryDatabase o-- "0..*" LibraryItem : contains
+LibraryDatabase o-- "0..*" UserAccount : contains
+
+note as N1
+  **Encapsulation**: fields are protected/private;
+  access via getters/setters and behaviour methods.
+
+  **Polymorphism**: LibraryManager.processItem(LibraryItem)
+  works with Book, Magazine, or Journal at runtime.
+end note
+
+@enduml
