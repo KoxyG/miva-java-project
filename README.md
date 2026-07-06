@@ -265,19 +265,19 @@ The project includes **39 unit tests** with no external dependencies (no JUnit r
 
 ## Design Decisions
 
-**Why Merge Sort as the default recommendation?**  
+**Why Merge Sort as the default recommendation?**
 Merge sort guarantees O(n log n) performance regardless of input order and is stable (preserves relative order of equal elements), making it reliable for catalogue sorting before binary search.
 
-**Why a Stack for undo?**  
+**Why a Stack for undo?**
 Admin operations are reversed in last-in-first-out order, which matches natural user expectation — undoing the most recent action first.
 
-**Why a Queue for reservations?**  
+**Why a Queue for reservations?**
 Library waitlists are fair: the first person to reserve an item should receive it first when it is returned (FIFO).
 
-**Why JSON for persistence?**  
+**Why JSON for persistence?**
 Human-readable text files are easy to inspect, debug, and submit as part of the project without requiring a database.
 
-**Package separation**  
+**Package separation**
 The four-package layout (`model`, `controller`, `gui`, `utils`) keeps domain logic independent of the UI, making the system easier to test and maintain.
 
 ---
