@@ -284,6 +284,6 @@ The four-package layout (`model`, `controller`, `gui`, `utils`) keeps domain log
 
 ## Author
 
-MIVA Open University — Software Engineering / Java Programming Project
+MIVA Open University — Cyber security / Java Programming Project
 
 © 2025 MIVA Open University. All Rights Reserved.
